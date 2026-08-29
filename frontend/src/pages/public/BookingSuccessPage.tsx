@@ -3,11 +3,7 @@ import { useEffect, useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import type { BookingConfirmation } from '@/api/types';
 import { BOOKING_LAST_KEY } from '@/features/public-booking/useCreateBooking';
-import {
-  formatAdminBookingTime,
-  formatDateInMsk,
-  formatSlotRangeInMsk,
-} from '@/lib/formatters';
+import { formatAdminBookingTime, formatDateInTz, formatSlotRange } from '@/lib/formatters';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -77,6 +73,8 @@ export function BookingSuccessPage() {
     );
   }
 
+  const timezone = confirmation.event_type.timezone;
+
   return (
     <section className="mx-auto flex max-w-2xl flex-col gap-6">
       <Card>
@@ -91,11 +89,14 @@ export function BookingSuccessPage() {
         </CardHeader>
         <CardContent className="grid gap-3 text-sm">
           <Row label="Тип события" value={confirmation.event_type.name} />
-          <Row label="Дата" value={formatDateInMsk(confirmation.start_at)} />
-          <Row label="Время" value={formatSlotRangeInMsk(confirmation.start_at, confirmation.end_at)} />
+          <Row label="Дата" value={formatDateInTz(confirmation.start_at, timezone)} />
+          <Row
+            label="Время"
+            value={formatSlotRange(confirmation.start_at, confirmation.end_at, timezone)}
+          />
           <Row label="Гость" value={confirmation.guest_name} />
           <Row label="E-mail" value={confirmation.guest_email} />
-          <Row label="Создано" value={formatAdminBookingTime(confirmation.created_at)} />
+          <Row label="Создано" value={formatAdminBookingTime(confirmation.created_at, timezone)} />
         </CardContent>
       </Card>
       <Button asChild className="self-start">

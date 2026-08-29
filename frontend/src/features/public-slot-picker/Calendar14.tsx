@@ -1,18 +1,20 @@
 import { useMemo } from 'react';
-import { addDaysMsk, todayInMsk } from '@/api/time';
+import { addDays, todayInTz, DEFAULT_TZ } from '@/api/time';
 import { Calendar } from '@/components/ui/calendar';
 
 interface Calendar14Props {
-  value: Date | undefined;
+  value?: Date;
   onChange: (date: Date | undefined) => void;
+  timezone?: string;
 }
 
-export function Calendar14({ value, onChange }: Calendar14Props) {
+export function Calendar14({ value, onChange, timezone }: Calendar14Props) {
+  const tz = timezone ?? DEFAULT_TZ;
   const { from, to } = useMemo(() => {
-    const fromDate = todayInMsk();
-    const toDate = addDaysMsk(fromDate, 13);
+    const fromDate = todayInTz(tz);
+    const toDate = addDays(fromDate, 13, tz);
     return { from: new Date(`${fromDate}T00:00:00`), to: new Date(`${toDate}T00:00:00`) };
-  }, []);
+  }, [tz]);
 
   return (
     <Calendar

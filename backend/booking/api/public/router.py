@@ -16,6 +16,7 @@ from booking.api.public.schemas import (
     EventTypeOut,
     SlotOut,
 )
+from booking.app_registry import app_registry
 from booking.domain import EventType, Slot
 from booking.services.bookings import BookingRequest, BookingService
 from booking.services.event_types import EventTypeService
@@ -24,12 +25,17 @@ from booking.services.slots import SlotService
 router = Router()
 
 
+def _owner_timezone() -> str:
+    return app_registry.owner.timezone
+
+
 def _event_type_out(et: EventType) -> EventTypeOut:
     return EventTypeOut(
         id=et.id,
         name=et.name,
         description=et.description,
         duration_minutes=et.duration_minutes,
+        timezone=_owner_timezone(),
     )
 
 

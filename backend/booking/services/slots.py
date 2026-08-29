@@ -4,19 +4,20 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from booking.domain import Slot
 from booking.errors import AppError, ErrorCode
 from booking.repositories.base import BookingRepo, EventTypeRepo
-from booking.timeutils import grid_for_date_msk, parse_query_date, window_dates_msk
+from booking.timeutils import grid_for_date, parse_query_date, window_dates
 
 
 class SlotService:
-    """Builds the 30-minute slot grid for a single day in Europe/Moscow.
+    """Builds the 30-minute slot grid for a single day in the owner's timezone.
 
-    The grid itself spans 06:00..22:00 MSK in 30-min steps (32 slots). All slots
-    are returned; past slots and slots occupied by an existing booking are
-    marked ``busy`` rather than omitted, per OpenAPI summary.
+    The grid itself spans 06:00..22:00 local (owner timezone) in 30-min steps
+    (32 slots). All slots are returned; past slots and slots occupied by an
+    existing booking are marked ``busy`` rather than omitted, per OpenAPI summary.
     """
 
     def __init__(
@@ -24,10 +25,12 @@ class SlotService:
         event_types: EventTypeRepo,
         bookings: BookingRepo,
         clock: Callable[[], datetime],
+        tz: ZoneInfo,
     ) -> None:
         self._event_types = event_types
         self._bookings = bookings
         self._clock = clock
+        self._tz = tz
 
     def grid_for_day(self, event_type_id: int, date_ymd: str) -> list[Slot]:
         event_type = self._event_types.get(event_type_id)
@@ -46,7 +49,7 @@ class SlotService:
             ) from exc
 
         now = self._clock()
-        win_start, win_end = window_dates_msk(now)
+        win_start, win_end = window_dates(now, self._tz)
         if target < win_start or target > win_end:
             raise AppError(
                 ErrorCode.SLOT_OUTSIDE_WINDOW,
@@ -54,7 +57,7 @@ class SlotService:
             )
 
         slots: list[Slot] = []
-        for start_utc, end_utc in grid_for_date_msk(target):
+        for start_utc, end_utc in grid_for_date(target, self._tz):
             in_past = start_utc < now
             taken = self._bookings.has_conflict(start_utc)
             slots.append(

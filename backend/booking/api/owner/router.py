@@ -17,6 +17,7 @@ from booking.api.owner.schemas import (
     EventTypeIn,
     EventTypeOut,
 )
+from booking.app_registry import app_registry
 from booking.domain import EventType
 from booking.services.bookings import BookingService
 from booking.services.event_types import EventTypeIn as SvcEventTypeIn
@@ -35,6 +36,7 @@ def _event_type_out(et: EventType) -> EventTypeOut:
         name=et.name,
         description=et.description,
         duration_minutes=et.duration_minutes,
+        timezone=app_registry.owner.timezone,
     )
 
 
