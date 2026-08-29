@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { api } from '@/api/client';
-import { todayInMsk } from '@/api/time';
-import { formatSlotRangeInMsk, formatDateInMsk } from '@/lib/formatters';
+import { todayInTz, DEFAULT_TZ, formatTzName } from '@/api/time';
+import { formatSlotRange, formatDateYmd } from '@/lib/formatters';
 import { useBookingDraft } from '@/features/public-booking/BookingDraftContext';
 import { ContactForm } from '@/features/public-booking/ContactForm';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
@@ -20,8 +20,6 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import type { EventType } from '@/api/types';
-
-const MSK = 'Europe/Moscow';
 
 async function fetchEventType(id: number): Promise<EventType> {
   const { data } = await api.GET('/api/event-types/{id}', { params: { path: { id } } });
@@ -44,7 +42,9 @@ export function BookingFormPage() {
     return <Navigate to={`/event-types/${eventTypeId}`} replace />;
   }
 
-  const date = draft.date ?? todayInMsk();
+  const timezone = eventTypeQuery.data?.timezone ?? DEFAULT_TZ;
+  const tzName = formatTzName(timezone);
+  const date = draft.date ?? todayInTz(timezone);
 
   return (
     <section className="mx-auto flex max-w-2xl flex-col gap-6">
@@ -60,17 +60,15 @@ export function BookingFormPage() {
         <CardContent className="grid gap-3">
           <div className="rounded-md border bg-muted/30 p-3">
             <p className="text-xs uppercase text-muted-foreground">Дата</p>
-            <p className="text-sm font-medium">
-              {formatDateInMsk(`${date}T12:00:00+03:00`)}
-            </p>
+            <p className="text-sm font-medium">{formatDateYmd(date)}</p>
           </div>
           <div className="rounded-md border bg-muted/30 p-3">
-            <p className="text-xs uppercase text-muted-foreground">Время (МСК)</p>
+            <p className="text-xs uppercase text-muted-foreground">Время ({tzName})</p>
             <p className="text-sm font-medium">
-              {formatSlotRangeInMsk(draft.slot.start_at, draft.slot.end_at)}
+              {formatSlotRange(draft.slot.start_at, draft.slot.end_at, timezone)}
             </p>
             <p className="text-xs text-muted-foreground">
-              {format(toZonedTime(draft.slot.start_at, MSK), 'HH:mm')} МСК
+              {format(toZonedTime(draft.slot.start_at, timezone), 'HH:mm')} {tzName}
             </p>
           </div>
         </CardContent>

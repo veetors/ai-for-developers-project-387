@@ -4,8 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { api } from '@/api/client';
-import { todayInMsk } from '@/api/time';
-import { formatDateInMsk } from '@/lib/formatters';
+import { todayInTz, DEFAULT_TZ, formatTzName } from '@/api/time';
+import { formatDateInTz, formatDateYmd } from '@/lib/formatters';
 import { useBookingDraft } from '@/features/public-booking/BookingDraftContext';
 import { useSlots } from '@/features/public-slot-picker/useSlots';
 import { Calendar14 } from '@/features/public-slot-picker/Calendar14';
@@ -24,15 +24,13 @@ import {
 import { Separator } from '@/components/ui/separator';
 import type { EventType } from '@/api/types';
 
-const MSK = 'Europe/Moscow';
-
 async function fetchEventType(id: number): Promise<EventType> {
   const { data } = await api.GET('/api/event-types/{id}', { params: { path: { id } } });
   return data as EventType;
 }
 
-function dateToYmd(date: Date): string {
-  return format(toZonedTime(date, MSK), 'yyyy-MM-dd');
+function dateToYmd(date: Date, tz: string): string {
+  return format(toZonedTime(date, tz), 'yyyy-MM-dd');
 }
 
 export function EventTypeSlotsPage() {
@@ -49,6 +47,8 @@ export function EventTypeSlotsPage() {
     enabled: isValidId,
   });
 
+  const timezone = eventTypeQuery.data?.timezone ?? DEFAULT_TZ;
+
   useEffect(() => {
     if (isValidId && draft.eventTypeId !== eventTypeId) {
       draft.setEventType(eventTypeId);
@@ -57,12 +57,12 @@ export function EventTypeSlotsPage() {
 
   useEffect(() => {
     if (!draft.date) {
-      const today = todayInMsk();
+      const today = todayInTz(timezone);
       draft.setDate(today);
     }
-  }, [draft]);
+  }, [draft, timezone]);
 
-  const date = draft.date ?? todayInMsk();
+  const date = draft.date ?? todayInTz(timezone);
   const slotsQuery = useSlots(isValidId ? eventTypeId : NaN, date);
 
   const selectedDateValue = useMemo(() => new Date(`${date}T00:00:00`), [date]);
@@ -103,12 +103,12 @@ export function EventTypeSlotsPage() {
           <CardContent className="space-y-3">
             <div className="rounded-md border bg-muted/30 p-3">
               <p className="text-xs uppercase text-muted-foreground">Выбранная дата</p>
-              <p className="text-sm font-medium">{formatDateInMsk(`${date}T12:00:00+03:00`)}</p>
+              <p className="text-sm font-medium">{formatDateYmd(date)}</p>
             </div>
             <div className="rounded-md border bg-muted/30 p-3">
               <p className="text-xs uppercase text-muted-foreground">Выбранное время</p>
               <p className="text-sm font-medium">
-                {draft.slot ? formatDateInMsk(draft.slot.start_at) : 'Время не выбрано'}
+                {draft.slot ? formatDateInTz(draft.slot.start_at, timezone) : 'Время не выбрано'}
               </p>
             </div>
           </CardContent>
@@ -121,9 +121,10 @@ export function EventTypeSlotsPage() {
           <CardContent className="flex justify-center">
             <Calendar14
               value={selectedDateValue}
+              timezone={timezone}
               onChange={(value) => {
                 if (!value) return;
-                const next = dateToYmd(value);
+                const next = dateToYmd(value, timezone);
                 if (next !== draft.date) draft.setDate(next);
               }}
             />
@@ -133,7 +134,9 @@ export function EventTypeSlotsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Статус слотов</CardTitle>
-            <CardDescription>06:00 — 22:00 МСК, шаг 30 мин.</CardDescription>
+            <CardDescription>
+              06:00 — 22:00 {formatTzName(timezone)}, шаг 30 мин.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {slotsQuery.isPending && <LoadingSpinner label="Загружаем слоты…" />}
@@ -145,6 +148,7 @@ export function EventTypeSlotsPage() {
                 slots={slotsQuery.data}
                 selectedStartAt={draft.slot?.start_at ?? null}
                 onSelect={draft.selectSlot}
+                timezone={timezone}
               />
             )}
           </CardContent>
@@ -160,7 +164,7 @@ export function EventTypeSlotsPage() {
         <div className="flex items-center gap-3">
           {draft.slot && (
             <Badge variant="outline">
-              {format(toZonedTime(draft.slot.start_at, MSK), 'HH:mm')} МСК
+              {format(toZonedTime(draft.slot.start_at, timezone), 'HH:mm')} {formatTzName(timezone)}
             </Badge>
           )}
           <Button
