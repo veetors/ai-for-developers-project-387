@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.0](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.2.0...booking-service-v0.3.0) (2026-08-29)
+
+
+### Features
+
+* add full-stack booking service (frontend, backend, spec) ([1525d5e](https://github.com/veetors/ai-for-developers-project-387/commit/1525d5ef52d4130a74aa2d219b29061555ed55b7))
+
+
+### Bug Fixes
+
+* grant write permissions for opencode workflow ([fcff1c0](https://github.com/veetors/ai-for-developers-project-387/commit/fcff1c002dd6fd8d3436f7f864d8c18def72983d))
+* use GITHUB_TOKEN instead of OIDC for opencode workflow ([c40db26](https://github.com/veetors/ai-for-developers-project-387/commit/c40db269f4cddec24acb1f3481e2df140284d28d))
+
+
+### Documentation
+
+* add custom-schedule feature roadmap ([9412cf8](https://github.com/veetors/ai-for-developers-project-387/commit/9412cf8ee3ffb9ff58328cb7e35829ec7ff9f9e8))
+* add manual push convention to AGENTS.md ([cada0dc](https://github.com/veetors/ai-for-developers-project-387/commit/cada0dcce54f6b7f671c0e43189d9527ba3b282e))
+
+
+### Continuous Integration
+
+* add GitHub Actions CI workflow ([c997b42](https://github.com/veetors/ai-for-developers-project-387/commit/c997b42630bc69f26bc802f6876879dea10f393c))
+* add OpenCode GitHub Actions workflow ([1f1e0b6](https://github.com/veetors/ai-for-developers-project-387/commit/1f1e0b6919e0234b0c3bdaa9a074d01b101852ab))
+* add release-please workflow ([cf3092c](https://github.com/veetors/ai-for-developers-project-387/commit/cf3092c70c70cb2e2c138867dfe5cb2c81a15b50))
+
 ## [0.2.0](https://github.com/veetors/ai-for-developers-project-386/compare/booking-service-v0.1.0...booking-service-v0.2.0) (2026-08-16)
 
 
