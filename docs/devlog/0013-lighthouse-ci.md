@@ -19,8 +19,8 @@
 5. Дописывает датированную запись в этот файл; при регрессиях/дефектах открывает PR;
 6. HTML-отчёты сохраняются как artifact `lighthouse-reports` (30 дней), таблица скоров — в job summary.
 
-Расписание на период валидации — hourly (`17 * * * *`); после зелёных прогонов менять
-на daily 04:00 МСК (`0 1 * * *`).
+Расписание — daily 04:17 МСК (`17 1 * * *`, 01:17 UTC): off-peak час + нечётная минута
+против дропов планировщика GitHub (см. docs/devlog/0014-schedule-delivery.md).
 
 Assertions в `lighthouserc.cjs` пока на уровне `warn` (джоба зелёная, но предупреждения видны);
 пороги ужесточать до `error`, когда накопятся данные.
@@ -41,7 +41,7 @@ Assertions в `lighthouserc.cjs` пока на уровне `warn` (джоба �
 
 ## ⚙️ Важные детали
 - `LHCI_GITHUB_TOKEN` = `secrets.GITHUB_TOKEN` (статус-чек в будущих PR);
-- `concurrency.cancel-in-progress: false` — hourly прогоны не накладываются;
+- `concurrency.cancel-in-progress: false` — daily прогоны не накладываются;
 - `.lighthouseci/` в `.gitignore` — изменения агента коммитятся только через devlog/PR;
 - summary считается из самих LHR JSON (при `temporary-public-storage` файла `manifest.json` не создаётся).
 

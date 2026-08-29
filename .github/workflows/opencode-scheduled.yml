@@ -10,9 +10,9 @@ name: Scheduled OpenCode Task (Lighthouse)
 
 on:
   schedule:
-    # Hourly while validating the flow. After 1-2 green runs switch to
-    # daily at 04:00 MSK: "0 1 * * *" (01:00 UTC + 3h).
-    - cron: '17 * * * *'
+    # Daily at 04:17 MSK = 01:17 UTC. Off-peak час + нечётная минута
+    # снижают задержку/дропы планировщика GitHub (docs/devlog/0014-schedule-delivery.md).
+    - cron: '17 1 * * *'
   workflow_dispatch:
 
 concurrency:
