@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.0...booking-service-v0.4.1) (2026-08-29)
+
+
+### Documentation
+
+* add devlog for opencode workflow CI fix ([07b4449](https://github.com/veetors/ai-for-developers-project-387/commit/07b4449b1df04f4f8a624c9504e0594deec54747))
+
 ## [0.4.0](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.3.1...booking-service-v0.4.0) (2026-08-29)
 
 
