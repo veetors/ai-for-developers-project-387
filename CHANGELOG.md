@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.6](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.5...booking-service-v0.4.6) (2026-08-29)
+
+
+### Continuous Integration
+
+* **scheduled:** switch lighthouse audit from hourly to daily at 04:17 MSK ([b337738](https://github.com/veetors/ai-for-developers-project-387/commit/b33773867b3ba60ae190dd9df04535216cd86ced))
+
 ## [0.4.5](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.4...booking-service-v0.4.5) (2026-08-29)
 
 
