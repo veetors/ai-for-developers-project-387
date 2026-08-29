@@ -7,11 +7,19 @@ and immediately get a service that uses the fixed clock.
 
 from __future__ import annotations
 
+from zoneinfo import ZoneInfo
+
 from booking import timeutils
 from booking.app_registry import app_registry
 from booking.services.bookings import BookingService
 from booking.services.event_types import EventTypeService
 from booking.services.slots import SlotService
+
+
+def _owner_tz() -> ZoneInfo:
+    """Resolve the single owner's timezone from the registry (v1 uses Owner.timezone)."""
+
+    return ZoneInfo(app_registry.owner.timezone)
 
 
 def get_event_type_service() -> EventTypeService:
@@ -23,6 +31,7 @@ def get_slot_service() -> SlotService:
         event_types=app_registry.event_types,
         bookings=app_registry.bookings,
         clock=timeutils.now_utc,
+        tz=_owner_tz(),
     )
 
 
@@ -31,4 +40,5 @@ def get_booking_service() -> BookingService:
         bookings=app_registry.bookings,
         event_type_service=get_event_type_service(),
         clock=timeutils.now_utc,
+        tz=_owner_tz(),
     )

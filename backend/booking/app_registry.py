@@ -41,5 +41,13 @@ class AppRegistry:
         if self._owner_repo is not None:
             self._owner_repo.owner = bootstrap_owner()
 
+    def set_owner_timezone(self, timezone: str) -> None:
+        """Swap the single owner's timezone (used by tests to exercise rules in non-MSK tz)."""
+
+        if self._owner_repo is None:
+            self.bootstrap()
+        owner = self._owner_repo.get_default()
+        self._owner_repo.owner = Owner(id=owner.id, name=owner.name, timezone=timezone)
+
 
 app_registry = AppRegistry()

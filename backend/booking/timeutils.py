@@ -1,4 +1,9 @@
-"""Time helpers: MSK<->UTC, working-hours window, 30-min slot grid."""
+"""Time helpers: tz-aware <-> UTC, working-hours window, 30-min slot grid.
+
+All business rules are anchored to *the owner's timezone* (Owner.timezone),
+never to the server clock. ``MSK`` is kept as the well-known default for the
+preset owner, but callers must pass the owner's ``ZoneInfo`` explicitly.
+"""
 
 from __future__ import annotations
 
@@ -20,24 +25,24 @@ def now_utc() -> datetime:
     return datetime.now(tz=UTC)
 
 
-def today_msk(now: datetime) -> date:
-    """Return today's date in Europe/Moscow for a tz-aware UTC moment."""
+def today_in_tz(now: datetime, tz: ZoneInfo) -> date:
+    """Return today's date in the given timezone for a tz-aware UTC moment."""
 
-    return now.astimezone(MSK).date()
+    return now.astimezone(tz).date()
 
 
-def window_dates_msk(now: datetime) -> tuple[date, date]:
-    """Return (today, today+13) — exclusive 14-day window in Europe/Moscow."""
+def window_dates(now: datetime, tz: ZoneInfo) -> tuple[date, date]:
+    """Return (today, today+13) — exclusive 14-day window in the given timezone."""
 
-    start = today_msk(now)
+    start = today_in_tz(now, tz)
     end = start + timedelta(days=13)
     return start, end
 
 
-def combine_msk_to_utc(d: date, t: time) -> datetime:
-    """Compose date+time in MSK and convert to tz-aware UTC."""
+def combine_to_utc(d: date, t: time, tz: ZoneInfo) -> datetime:
+    """Compose date+time in the given timezone and convert to tz-aware UTC."""
 
-    return datetime.combine(d, t, tzinfo=MSK).astimezone(UTC)
+    return datetime.combine(d, t, tzinfo=tz).astimezone(UTC)
 
 
 def parse_query_date(value: str) -> date:
@@ -55,17 +60,17 @@ def duration_minutes_for(_event_type_duration_minutes: int) -> timedelta:
     return timedelta(minutes=_event_type_duration_minutes)
 
 
-def is_within_work_hours_msk(start_at_utc: datetime) -> bool:
-    """True iff the local MSK start time is within [WORK_START, WORK_END)."""
+def is_within_work_hours(start_at_utc: datetime, tz: ZoneInfo) -> bool:
+    """True iff the local (owner-tz) start time is within [WORK_START, WORK_END)."""
 
     if start_at_utc.tzinfo is None:
         raise ValueError("start_at must be tz-aware UTC")
-    local = start_at_utc.astimezone(MSK)
+    local = start_at_utc.astimezone(tz)
     return WORK_START <= local.time() < WORK_END
 
 
-def grid_for_date_msk(d: date) -> list[tuple[datetime, datetime]]:
-    """Yield 32 (start_utc, end_utc) pairs for the working day 06:00..22:00 MSK."""
+def grid_for_date(d: date, tz: ZoneInfo) -> list[tuple[datetime, datetime]]:
+    """Yield 32 (start_utc, end_utc) pairs for the working day 06:00..22:00 in tz."""
 
     out: list[tuple[datetime, datetime]] = []
     for step in range(SLOTS_PER_DAY):
@@ -73,10 +78,8 @@ def grid_for_date_msk(d: date) -> list[tuple[datetime, datetime]]:
             hour=WORK_START.hour + (step * GRID_MINUTES) // 60,
             minute=(step * GRID_MINUTES) % 60,
         )
-        end_local = datetime.combine(d, start_local, tzinfo=MSK) + duration_minutes_for(
-            GRID_MINUTES
-        )
-        start_utc = datetime.combine(d, start_local, tzinfo=MSK).astimezone(UTC)
+        end_local = datetime.combine(d, start_local, tzinfo=tz) + duration_minutes_for(GRID_MINUTES)
+        start_utc = datetime.combine(d, start_local, tzinfo=tz).astimezone(UTC)
         end_utc = end_local.astimezone(UTC)
         out.append((start_utc, end_utc))
     return out
