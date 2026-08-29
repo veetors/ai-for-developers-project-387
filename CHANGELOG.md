@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.3.0...booking-service-v0.3.1) (2026-08-29)
+
+
+### Continuous Integration
+
+* fix opencode workflow git identity and permissions ([e3ba603](https://github.com/veetors/ai-for-developers-project-387/commit/e3ba603e4f18aa0e9daa4ca7b6ef938675aca85a))
+
 ## [0.3.0](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.2.0...booking-service-v0.3.0) (2026-08-29)
 
 
