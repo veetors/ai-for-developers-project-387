@@ -9,6 +9,11 @@ http {
     default_type application/octet-stream;
     sendfile on;
 
+    # Serve pre-built static assets compressed (Lighthouse: uses-text-compression).
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/javascript image/svg+xml;
+    gzip_min_length 1024;
+
     server {
         listen ${PORT};
         server_name _;
