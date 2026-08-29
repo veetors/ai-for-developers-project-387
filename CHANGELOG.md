@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.3](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.2...booking-service-v0.4.3) (2026-08-29)
+
+
+### Performance Improvements
+
+* **frontend:** enable gzip and fix lighthouse A11y/SEO audits ([cc1850e](https://github.com/veetors/ai-for-developers-project-387/commit/cc1850ea55c5e78ac56672848251b2d9856935e5))
+* **frontend:** lighthouse 2026-08-29 — gzip, a11y/SEO fixes ([74ea226](https://github.com/veetors/ai-for-developers-project-387/commit/74ea22694299919d372662f2ef455a1adc9ecb10))
+
+
+### Documentation
+
+* record lighthouse 2026-08-29 run with fixes ([0950bd2](https://github.com/veetors/ai-for-developers-project-387/commit/0950bd20ebb8812132a630aec0b9cbe5cac25077))
+
+
+### Continuous Integration
+
+* upload lighthouse reports artifact in scheduled workflow ([9a542f8](https://github.com/veetors/ai-for-developers-project-387/commit/9a542f84ac17d697c76d182400deed5f8e8d88ef))
+
 ## [0.4.2](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.1...booking-service-v0.4.2) (2026-08-29)
 
 
