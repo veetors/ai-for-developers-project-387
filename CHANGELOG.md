@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.1...booking-service-v0.4.2) (2026-08-29)
+
+
+### Continuous Integration
+
+* add scheduled lighthouse audit via opencode workflow ([009cab0](https://github.com/veetors/ai-for-developers-project-387/commit/009cab06d887a6b2148cbb734ff3223a0e142f69))
+
 ## [0.4.1](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.0...booking-service-v0.4.1) (2026-08-29)
 
 
