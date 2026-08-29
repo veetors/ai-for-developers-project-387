@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.3.1...booking-service-v0.4.0) (2026-08-29)
+
+
+### Features
+
+* bind booking rules and UI to owner timezone ([aaac419](https://github.com/veetors/ai-for-developers-project-387/commit/aaac41958fd640a0816f4d4dca3f179fc91e1e27))
+
+
+### Tests
+
+* use Vladivostok and AAA structure in timezone tests ([856e73e](https://github.com/veetors/ai-for-developers-project-387/commit/856e73e0ddb2e5325e21609d351f12ea5c24c70b))
+
 ## [0.3.1](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.3.0...booking-service-v0.3.1) (2026-08-29)
 
 
