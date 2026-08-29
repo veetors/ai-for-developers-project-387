@@ -136,7 +136,7 @@ curl -s https://booking-service-3k4r.onrender.com/api/event-types   # 200 JSON
 
 - Все сетевые вызовы идут через `src/api/client.ts` (`openapi-fetch`) и автоматически превращают не‑2xx ответ в `AppError(status, ErrorBody)`.
 - Карта `ErrorCode → русский текст` живёт в [`src/api/errors.ts`](frontend/src/api/errors.ts).
-- Все производные «сегодня» и «граница 14 дней» используют `date-fns-tz` c `Europe/Moscow`.
+- Все производные «сегодня» и «граница 14 дней» используют `date-fns-tz`, параметризованную таймзоной владельца (`EventType.timezone`, из `DEFAULT_TZ` в `Europe/Moscow` по умолчанию).
 - UI‑компоненты — копия shadcn/ui в [`src/components/ui/`](frontend/src/components/ui/). Никаких глобальных state‑менеджеров сверх TanStack Query + React Context.
 
 ## CI и релизы

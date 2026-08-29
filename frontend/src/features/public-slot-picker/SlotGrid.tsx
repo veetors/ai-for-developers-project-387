@@ -1,25 +1,22 @@
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatSlotRangeInMsk } from '@/lib/formatters';
-import { format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { formatSlotRange } from '@/lib/formatters';
+import { formatInTimeZone } from 'date-fns-tz';
 import type { Slot } from '@/api/types';
 
 interface SlotGridProps {
   slots: Slot[];
   selectedStartAt: string | null;
   onSelect: (slot: Slot) => void;
+  tz: string;
 }
-
-const MSK = 'Europe/Moscow';
 
 function isPast(slot: Slot, now: Date): boolean {
-  const zoned = toZonedTime(slot.start_at, MSK);
-  return zoned.getTime() < now.getTime();
+  return new Date(slot.start_at).getTime() < now.getTime();
 }
 
-export function SlotGrid({ slots, selectedStartAt, onSelect }: SlotGridProps) {
+export function SlotGrid({ slots, selectedStartAt, onSelect, tz }: SlotGridProps) {
   const now = new Date();
 
   return (
@@ -32,7 +29,7 @@ export function SlotGrid({ slots, selectedStartAt, onSelect }: SlotGridProps) {
       {slots.map((slot) => {
         const busy = slot.status === 'busy' || isPast(slot, now);
         const isSelected = selectedStartAt === slot.start_at;
-        const time = format(toZonedTime(slot.start_at, MSK), 'HH:mm');
+        const time = formatInTimeZone(slot.start_at, tz, 'HH:mm');
         return (
           <Button
             key={slot.start_at}
@@ -47,7 +44,7 @@ export function SlotGrid({ slots, selectedStartAt, onSelect }: SlotGridProps) {
               isSelected && 'ring-2 ring-primary',
             )}
           >
-            <span className="text-sm">{formatSlotRangeInMsk(slot.start_at, slot.end_at)}</span>
+            <span className="text-sm">{formatSlotRange(slot.start_at, slot.end_at, tz)}</span>
             <span className="flex items-center gap-2 text-xs">
               <span className="text-muted-foreground">{time}</span>
               <Badge variant={busy ? 'secondary' : 'success'}>{busy ? 'Занято' : 'Свободно'}</Badge>

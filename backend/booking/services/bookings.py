@@ -13,8 +13,8 @@ from booking.repositories.base import BookingRepo
 from booking.services.event_types import EventTypeService
 from booking.timeutils import (
     duration_minutes_for,
-    is_within_work_hours_msk,
-    window_dates_msk,
+    is_within_work_hours,
+    window_dates,
 )
 
 
@@ -39,10 +39,12 @@ class BookingService:
         bookings: BookingRepo,
         event_type_service: EventTypeService,
         clock: Callable[[], datetime],
+        tz: ZoneInfo,
     ) -> None:
         self._bookings = bookings
         self._event_type_service = event_type_service
         self._clock = clock
+        self._tz = tz
 
     def create(self, event_type_id: int, request: BookingRequest) -> Booking:
         event_type = self._event_type_service.get(event_type_id)
@@ -95,8 +97,8 @@ class BookingService:
             )
 
     def _assert_in_window(self, start_at: datetime, now: datetime) -> None:
-        local_date = start_at.astimezone(ZoneInfo("Europe/Moscow")).date()
-        win_start, win_end = window_dates_msk(now)
+        local_date = start_at.astimezone(self._tz).date()
+        win_start, win_end = window_dates(now, self._tz)
         if local_date < win_start or local_date > win_end:
             raise AppError(
                 ErrorCode.SLOT_OUTSIDE_WINDOW,
@@ -104,8 +106,8 @@ class BookingService:
             )
 
     def _assert_in_work_hours(self, start_at: datetime) -> None:
-        if not is_within_work_hours_msk(start_at):
+        if not is_within_work_hours(start_at, self._tz):
             raise AppError(
                 ErrorCode.SLOT_OUTSIDE_HOURS,
-                "Время вне рабочего диапазона 06:00–22:00 МСК.",
+                "Время вне рабочего диапазона 06:00–22:00 по локальному времени владельца.",
             )

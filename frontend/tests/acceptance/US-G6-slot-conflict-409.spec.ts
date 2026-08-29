@@ -1,7 +1,7 @@
 import { test, expect, type APIRequestContext } from '@playwright/test'
 import { formatInTimeZone } from 'date-fns-tz'
 
-const MSK = 'Europe/Moscow'
+const DEFAULT_TZ = 'Europe/Moscow'
 
 function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n)
@@ -11,8 +11,15 @@ function uniqueSuffix(): string {
   return `${Date.now()}-${Math.floor(Math.random() * 10_000)}`
 }
 
-function todayMsk(): string {
-  return formatInTimeZone(new Date(), MSK, 'yyyy-MM-dd')
+async function getEventTypeTimeZone(request: APIRequestContext, id: number): Promise<string> {
+  const res = await request.get(`/api/event-types/${id}`)
+  expect(res.status()).toBe(200)
+  const body = (await res.json()) as { timezone?: string }
+  return body.timezone ?? DEFAULT_TZ
+}
+
+function todayInTz(tz: string): string {
+  return formatInTimeZone(new Date(), tz, 'yyyy-MM-dd')
 }
 
 interface Slot {
@@ -21,9 +28,9 @@ interface Slot {
   status: 'free' | 'busy'
 }
 
-function mskHourMinute(iso: string): { hh: number; mm: number } {
-  const hh = Number(formatInTimeZone(iso, MSK, 'HH'))
-  const mm = Number(formatInTimeZone(iso, MSK, 'mm'))
+function hourMinute(iso: string, tz: string): { hh: number; mm: number } {
+  const hh = Number(formatInTimeZone(iso, tz, 'HH'))
+  const mm = Number(formatInTimeZone(iso, tz, 'mm'))
   return { hh, mm }
 }
 
@@ -42,8 +49,9 @@ async function seedEventType(request: APIRequestContext, suffix: string): Promis
 async function firstFreeSlotForToday(
   request: APIRequestContext,
   eventTypeId: number,
+  tz: string,
 ): Promise<Slot> {
-  const date = todayMsk()
+  const date = todayInTz(tz)
   const res = await request.get(`/api/event-types/${eventTypeId}/slots`, {
     params: { date },
   })
@@ -56,9 +64,10 @@ async function firstFreeSlotForToday(
 
 test('US-G6: 409 conflict surfaces toast and refreshes slot to busy', async ({ page, request }) => {
   const et = await seedEventType(request, uniqueSuffix())
-  const target = await firstFreeSlotForToday(request, et.id)
+  const tz = await getEventTypeTimeZone(request, et.id)
+  const target = await firstFreeSlotForToday(request, et.id, tz)
 
-  const { hh, mm } = mskHourMinute(target.start_at)
+  const { hh, mm } = hourMinute(target.start_at, tz)
   const expectedStart = `${pad(hh)}:${pad(mm)}`
 
   await page.goto(`/event-types/${et.id}`)

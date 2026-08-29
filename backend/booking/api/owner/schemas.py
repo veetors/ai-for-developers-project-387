@@ -42,6 +42,7 @@ class EventTypeOut(BaseModel):
     name: str
     description: str
     duration_minutes: int
+    timezone: str
 
 
 class AdminBookingOut(BaseModel):
@@ -53,3 +54,4 @@ class AdminBookingOut(BaseModel):
     start_at: datetime
     end_at: datetime
     created_at: datetime
+    timezone: str

@@ -1,15 +1,22 @@
 import { test, expect, type APIRequestContext } from '@playwright/test'
 import { addDays } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
+
+const DEFAULT_TZ = 'Europe/Moscow'
+
+function pad(n: number): string {
+  return n < 10 ? `0${n}` : String(n)
+}
 
 function uniqueSuffix(): string {
   return `${Date.now()}-${Math.floor(Math.random() * 10_000)}`
 }
 
-function isoMskAtTomorrow(hh: number, mm: number): string {
+function isoLocalTomorrowAt(hh: number, mm: number, tz: string): string {
   const tomorrow = addDays(new Date(), 1)
-  const utc = new Date(tomorrow.getTime())
-  utc.setUTCHours(hh - 3, mm, 0, 0)
-  return utc.toISOString().slice(0, 19) + '+00:00'
+  const date = formatInTimeZone(tomorrow, tz, 'yyyy-MM-dd')
+  const offset = formatInTimeZone(tomorrow, tz, 'xxx')
+  return `${date}T${pad(hh)}:${pad(mm)}:00${offset}`
 }
 
 async function seedEventTypeAndBooking(
@@ -27,12 +34,17 @@ async function seedEventTypeAndBooking(
   expect(etRes.status()).toBe(200)
   const et = (await etRes.json()) as { id: number }
 
+  const tzRes = await request.get(`/api/event-types/${et.id}`)
+  expect(tzRes.status()).toBe(200)
+  const tzBody = (await tzRes.json()) as { timezone?: string }
+  const tz = tzBody.timezone ?? DEFAULT_TZ
+
   const guestName = `US-O1 guest ${suffix}`
   const booking = await request.post(`/api/event-types/${et.id}/bookings`, {
     data: {
       guest_name: guestName,
       guest_email: 'o1@example.com',
-      start_at: isoMskAtTomorrow(11, 0),
+      start_at: isoLocalTomorrowAt(11, 0, tz),
     },
   })
   expect(booking.status()).toBe(200)
@@ -40,7 +52,7 @@ async function seedEventTypeAndBooking(
   return { eventTypeName, guestName }
 }
 
-test('US-O1: admin bookings list renders upcoming booking with MSK time', async ({
+test('US-O1: admin bookings list renders upcoming booking with owner-tz time', async ({
   page,
   request,
 }) => {

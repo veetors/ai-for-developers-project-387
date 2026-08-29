@@ -15,7 +15,7 @@ export class AppError extends Error {
 const DEFAULT_MESSAGES: Record<ErrorCode, string> = {
   validation_failed: 'Проверьте правильность заполнения полей.',
   slot_outside_window: 'Выбранная дата вне доступного окна (14 дней).',
-  slot_outside_hours: 'Время вне рабочего диапазона 06:00–22:00 МСК.',
+  slot_outside_hours: 'Время вне рабочего диапазона 06:00–22:00 по локальному времени владельца.',
   slot_in_past: 'Это время уже прошло.',
   slot_taken: 'Слот только что заняли. Выберите другое время.',
   event_type_not_found: 'Тип события не найден.',

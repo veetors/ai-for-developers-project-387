@@ -15,7 +15,7 @@ namespace BookingService;
 Шаблон встречи, на которую записывается гость.
 Принадлежит единственному владельцу календаря (id владельца = 1, создаётся сидом).
 """)
-@example(#{ id: 1, name: "Встреча 30 минут", description: "Базовый тип события для бронирования.", duration_minutes: 30 })
+@example(#{ id: 1, name: "Встреча 30 минут", description: "Базовый тип события для бронирования.", duration_minutes: 30, timezone: "Europe/Moscow" })
 model EventType {
   id: int64;
 
@@ -27,6 +27,13 @@ model EventType {
 
   @doc("Длительность встречи в минутах. В v1 допускается только значение 30.")
   duration_minutes: int32;
+
+  @doc("""
+  Таймзона владельца календаря (IANA id). Все слоты, окно 14 дней,
+  рабочие часы 06:00–22:00 и локальное отображение времени выстраиваются
+  относительно этой таймзоны.
+  """)
+  timezone: string;
 }
 
 enum SlotStatus {
@@ -36,7 +43,7 @@ enum SlotStatus {
 
 @doc("""
 Слот в сетке 30 минут на конкретную календарную дату.
-Время хранится в UTC ISO 8601 с offset; локальное отображение — Europe/Moscow.
+Время хранится в UTC ISO 8601 с offset; локальное отображение — таймзона владельца (см. EventType.timezone).
 """)
 model Slot {
   @doc("Начало слота, UTC ISO 8601 с offset.")
@@ -96,6 +103,9 @@ model AdminBooking {
   start_at: offsetDateTime;
   end_at: offsetDateTime;
   created_at: offsetDateTime;
+
+  @doc("Таймзона владельца календаря (IANA id). Локальное отображение времени бронирования — в ней.")
+  timezone: string;
 }
 
 @doc("""
@@ -155,7 +165,7 @@ model NotFoundError {
 Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
 - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
 - slot_outside_window — выбранная дата вне 14-дневного окна;
-- slot_outside_hours — время вне 06:00–22:00 MSK;
+- slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
 - slot_in_past — start_at уже в прошлом;
 - invalid_duration — duration_minutes ≠ 30.
 """)
@@ -188,7 +198,7 @@ namespace PublicEventTypes {
   @route("/{id}/slots")
   @summary("""
 Сетка слотов на конкретный день.
-Возвращаются ВСЕ 30-минутные слоты рабочего дня (06:00–22:00 MSK),
+Возвращаются ВСЕ 30-минутные слоты рабочего дня (06:00–22:00 по локальному времени владельца),
 с пометкой free/busy. Серверная проверка:
 - дата входит в 14-дневное окно (сегодня..сегодня+13), иначе slot_outside_window;
 - start_at >= текущего момента, иначе слот помечается busy;

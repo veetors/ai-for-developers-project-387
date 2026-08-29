@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from zoneinfo import ZoneInfo
 
-MSK = ZoneInfo("Europe/Moscow")
+from booking.timeutils import MSK
 
 
 def _future_msk(fixed_now: datetime, hour: int, minute: int = 0) -> datetime:

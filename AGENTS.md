@@ -42,7 +42,7 @@
 - Весь HTTP — через `src/api/client.ts` (openapi-fetch); не-2xx → `AppError(status, ErrorBody)`. Не вызывай `fetch` напрямую.
 - Клиент создаётся с `baseUrl: ''` — передавай полные пути вида `/api/event-types`. **Не** задавай baseUrl и **не** дублируй префикс `/api`.
 - Маппинг `ErrorCode → русский текст` — в `src/api/errors.ts`; формат ошибки `{ error: { code, message, details? } }`.
-- Вся логика «сегодня»/«окно 14 дней» — через `date-fns-tz` с `Europe/Moscow` (МСК). Не используй локальное/серверное время.
+- Вся логика «сегодня»/«окно 14 дней» — через `date-fns-tz`, параметризованную таймзоной владельца (`EventType.timezone`); дефолт (пока владелец один, сид) — `Europe/Moscow`, но не хардкодь её в новых местах. Не используй локальное/серверное время.
 - Псевдоним пути `@/` → `src/`.
 - shadcn/ui — **локальная копия** в `src/components/ui/` (style `new-york`). Добавляй компоненты через shadcn MCP (настроен в `opencode.json`); не импортируй shadcn из npm-пакета.
 - Никаких глобальных state-менеджеров сверх TanStack Query + React Context.
@@ -64,7 +64,7 @@
 - Слои: `domain.py` (`@dataclass(frozen=True)`) + `Protocol`-репозитории → `services/` (бизнес-правила) → `api/` (pydantic v2-схемы + django-ninja роутеры). Pydantic — только в API-слое.
 - Clock DI: сервисы принимают `Callable[[], datetime]` (по умолчанию `booking.timeutils.now_utc`). В тестах время фиксируется фикстурой `frozen_clock` (monkeypatch `booking.timeutils.now_utc`) — **без `freezegun`**.
 - Фикстура `reset_repos` — `autouse=True` (`app_registry.reset()`); каждый тест стартует с чистого состояния.
-- Серверные правила: окно 14 дней МСК, часы 06:00–22:00 МСК, сетка 30 мин (32 слота), конфликт слотов атомарно проверяется под локом в `InMemoryBookingRepo.reserve()`.
+- Серверные правила: окно 14 дней, часы 06:00–22:00, сетка 30 мин (32 слота) — всё привязано к таймзоне владельца (`Owner.timezone`, из seed — `Europe/Moscow`). Сервисы принимают `tz: ZoneInfo` через `deps.py` (`_owner_tz()`), конфликт слотов атомарно проверяется под локом в `InMemoryBookingRepo.reserve()`.
 - `booking/errors.py:ErrorCode` должен совпадать с `frontend/src/api/types.ts:ErrorCode` — это один и тот же wire-контракт.
 
 ## Git и CI

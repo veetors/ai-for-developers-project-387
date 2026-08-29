@@ -77,7 +77,7 @@ paths:
             Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
             - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
             - slot_outside_window — выбранная дата вне 14-дневного окна;
-            - slot_outside_hours — время вне 06:00–22:00 MSK;
+            - slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
             - slot_in_past — start_at уже в прошлом;
             - invalid_duration — duration_minutes ≠ 30.
           content:
@@ -95,7 +95,7 @@ paths:
       operationId: PublicEventTypes_slots
       summary: |-
         Сетка слотов на конкретный день.
-        Возвращаются ВСЕ 30-минутные слоты рабочего дня (06:00–22:00 MSK),
+        Возвращаются ВСЕ 30-минутные слоты рабочего дня (06:00–22:00 по локальному времени владельца),
         с пометкой free/busy. Серверная проверка:
         - дата входит в 14-дневное окно (сегодня..сегодня+13), иначе slot_outside_window;
         - start_at >= текущего момента, иначе слот помечается busy;
@@ -134,7 +134,7 @@ paths:
             Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
             - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
             - slot_outside_window — выбранная дата вне 14-дневного окна;
-            - slot_outside_hours — время вне 06:00–22:00 MSK;
+            - slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
             - slot_in_past — start_at уже в прошлом;
             - invalid_duration — duration_minutes ≠ 30.
           content:
@@ -188,7 +188,7 @@ paths:
             Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
             - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
             - slot_outside_window — выбранная дата вне 14-дневного окна;
-            - slot_outside_hours — время вне 06:00–22:00 MSK;
+            - slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
             - slot_in_past — start_at уже в прошлом;
             - invalid_duration — duration_minutes ≠ 30.
           content:
@@ -253,7 +253,7 @@ paths:
             Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
             - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
             - slot_outside_window — выбранная дата вне 14-дневного окна;
-            - slot_outside_hours — время вне 06:00–22:00 MSK;
+            - slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
             - slot_in_past — start_at уже в прошлом;
             - invalid_duration — duration_minutes ≠ 30.
           content:
@@ -298,6 +298,7 @@ components:
         - start_at
         - end_at
         - created_at
+        - timezone
       properties:
         id:
           type: integer
@@ -320,6 +321,9 @@ components:
         created_at:
           type: string
           format: date-time
+        timezone:
+          type: string
+          description: Таймзона владельца календаря (IANA id). Локальное отображение времени бронирования — в ней.
       description: |-
         Элемент списка бронирований, который видит владелец календаря в админке.
         Один тип события в списке не разворачивается — хватает id и name
@@ -414,6 +418,7 @@ components:
         - name
         - description
         - duration_minutes
+        - timezone
       properties:
         id:
           type: integer
@@ -428,6 +433,12 @@ components:
           type: integer
           format: int32
           description: Длительность встречи в минутах. В v1 допускается только значение 30.
+        timezone:
+          type: string
+          description: |-
+            Таймзона владельца календаря (IANA id). Все слоты, окно 14 дней,
+            рабочие часы 06:00–22:00 и локальное отображение времени выстраиваются
+            относительно этой таймзоны.
       description: |-
         Шаблон встречи, на которую записывается гость.
         Принадлежит единственному владельцу календаря (id владельца = 1, создаётся сидом).
@@ -436,6 +447,7 @@ components:
         name: Встреча 30 минут
         description: Базовый тип события для бронирования.
         duration_minutes: 30
+        timezone: Europe/Moscow
     EventTypeInput:
       type: object
       required:
@@ -495,7 +507,7 @@ components:
           $ref: '#/components/schemas/SlotStatus'
       description: |-
         Слот в сетке 30 минут на конкретную календарную дату.
-        Время хранится в UTC ISO 8601 с offset; локальное отображение — Europe/Moscow.
+        Время хранится в UTC ISO 8601 с offset; локальное отображение — таймзона владельца (см. EventType.timezone).
     SlotConflictError:
       type: object
       required:
@@ -520,7 +532,7 @@ components:
         Ошибка валидации запроса или нарушение бизнес-правила занятости/окна:
         - validation_failed — поле запроса не прошло проверку (формат email, длина имени и т.п.);
         - slot_outside_window — выбранная дата вне 14-дневного окна;
-        - slot_outside_hours — время вне 06:00–22:00 MSK;
+        - slot_outside_hours — время вне 06:00–22:00 по локальному времени владельца;
         - slot_in_past — start_at уже в прошлом;
         - invalid_duration — duration_minutes ≠ 30.
 servers:

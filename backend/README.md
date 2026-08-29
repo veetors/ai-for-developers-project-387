@@ -2,8 +2,11 @@
 
 Django 6 + django-ninja + pydantic v2 бэкенд для SPA из `frontend/`.
 Хранилище — оперативная память; после перезапуска контейнера данные сбрасываются.
-Все бизнес-правила (14-дневное окно, рабочие часы 06:00–22:00 MSK, занятость,
+Все бизнес-правила (14-дневное окно, рабочие часы 06:00–22:00 по локальному
+времени владельца календаря (по умолчанию `Europe/Moscow`), занятость,
 валидация контактов, длительность 30 минут) реализованы на сервере.
+Таймзона владельца (`Owner.timezone`) отдаётся наружу в `EventType.timezone`
+и `AdminBooking.timezone`; все правила и UI-отображение привязаны к ней.
 
 ## Быстрые команды
 
@@ -47,7 +50,7 @@ backend/
 ├── booking/
 │   ├── domain.py            # @dataclass(frozen=True): Owner, EventType, Booking, Slot
 │   ├── errors.py            # ErrorCode, AppError, STATUS_BY_CODE
-│   ├── timeutils.py         # МСК ⇄ UTC helpers, 32-шаговая сетка 06:00..21:30
+│   ├── timeutils.py         # tz-aware helpers (UTC ⇄ локальное время владельца), 32-шаговая сетка 06:00..21:30
 │   ├── seed.py              # предзаданный владелец id=1
 │   ├── app_registry.py      # AppRegistry + bootstrap (Lock + 3 in-memory repo)
 │   ├── apps.py              # AppConfig.ready()

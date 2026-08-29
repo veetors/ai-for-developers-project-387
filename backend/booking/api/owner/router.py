@@ -10,6 +10,7 @@ from ninja.responses import Status
 from booking.api.deps import (
     get_booking_service,
     get_event_type_service,
+    get_owner_timezone,
 )
 from booking.api.owner.schemas import (
     AdminBookingOut,
@@ -35,6 +36,7 @@ def _event_type_out(et: EventType) -> EventTypeOut:
         name=et.name,
         description=et.description,
         duration_minutes=et.duration_minutes,
+        timezone=get_owner_timezone(),
     )
 
 
@@ -107,6 +109,7 @@ def list_bookings(request) -> list[AdminBookingOut]:
             start_at=row.booking.start_at,
             end_at=row.booking.end_at,
             created_at=row.booking.created_at,
+            timezone=get_owner_timezone(),
         )
         for row in service.list_upcoming_admin()
     ]

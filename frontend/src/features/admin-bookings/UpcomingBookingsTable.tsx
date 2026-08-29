@@ -7,6 +7,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { formatAdminBookingTime } from '@/lib/formatters';
+import { DEFAULT_TZ, timezoneLabel } from '@/api/time';
 import type { AdminBooking } from '@/api/types';
 
 interface UpcomingBookingsTableProps {
@@ -14,11 +15,13 @@ interface UpcomingBookingsTableProps {
 }
 
 export function UpcomingBookingsTable({ bookings }: UpcomingBookingsTableProps) {
+  const tz = bookings[0]?.timezone ?? DEFAULT_TZ;
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Дата и время (МСК)</TableHead>
+          <TableHead>Дата и время ({timezoneLabel(tz)})</TableHead>
           <TableHead>Тип события</TableHead>
           <TableHead>Гость</TableHead>
           <TableHead>E-mail</TableHead>
@@ -27,7 +30,9 @@ export function UpcomingBookingsTable({ bookings }: UpcomingBookingsTableProps) 
       <TableBody>
         {bookings.map((booking) => (
           <TableRow key={booking.id} data-booking-id={booking.id}>
-            <TableCell>{formatAdminBookingTime(booking.start_at)}</TableCell>
+            <TableCell>
+              {formatAdminBookingTime(booking.start_at, booking.timezone ?? tz)}
+            </TableCell>
             <TableCell>{booking.event_type_name}</TableCell>
             <TableCell>{booking.guest_name}</TableCell>
             <TableCell>{booking.guest_email}</TableCell>

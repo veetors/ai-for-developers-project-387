@@ -7,6 +7,7 @@ from ninja import Router
 from booking.api.deps import (
     get_booking_service,
     get_event_type_service,
+    get_owner_timezone,
     get_slot_service,
 )
 from booking.api.public.schemas import (
@@ -30,6 +31,7 @@ def _event_type_out(et: EventType) -> EventTypeOut:
         name=et.name,
         description=et.description,
         duration_minutes=et.duration_minutes,
+        timezone=get_owner_timezone(),
     )
 
 
