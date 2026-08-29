@@ -1,0 +1,116 @@
+# Scheduled Lighthouse audit run by the opencode agent.
+#
+# Pattern: https://opencode.ai/docs/github/#schedule-example
+# - Runs on a schedule (and manually via workflow_dispatch).
+# - The agent brings up the production stack, runs Lighthouse CI, analyses the
+#   reports and records what fixes are needed (docs/devlog/0013-lighthouse-ci.md).
+# - Reports are saved as a workflow artifact so the team can open them.
+
+name: Scheduled OpenCode Task (Lighthouse)
+
+on:
+  schedule:
+    # Hourly while validating the flow. After 1-2 green runs switch to
+    # daily at 04:00 MSK: "0 1 * * *" (01:00 UTC + 3h).
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: opencode-scheduled
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  lighthouse:
+    name: Lighthouse audit (opencode)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: true
+
+      - name: Configure git identity
+        run: |
+          git config user.name "opencode-agent[bot]"
+          git config user.email "opencode-agent[bot]@users.noreply.github.com"
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run opencode (Lighthouse CI + analysis)
+        uses: anomalyco/opencode/github@latest
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LHCI_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: opencode/big-pickle
+          use_github_token: true
+          share: false
+          prompt: |
+            Ты — регулярная задача по прогону Lighthouse CI. Работай тихо, следуй шагам.
+
+            Шаги:
+            1. Из корня репозитория подними продакшен-стек (тот же, что в e2e):
+               docker compose --profile default up -d --build --wait backend frontend db
+               Дождись HTTP 200 от `curl -fsS http://localhost:3000/api/event-types`
+               (повторяй до 2 минут).
+            2. Добавь демо-тип события, чтобы каталог и страница слотов не были пустыми:
+               curl -fsS -X POST http://localhost:3000/api/owner/event-types \
+                 -H 'Content-Type: application/json' \
+                 -d '{"name":"Консультация 1:1","description":"Короткая консультация","duration_minutes":30}'
+            3. Запусти сбор/проверку/загрузку Lighthouse (конфиг frontend/lighthouserc.cjs,
+               3 URL x 3 прогона). LHCI_GITHUB_TOKEN уже задан в env workflow:
+               cd frontend && npx lhci autorun
+            4. Проанализируй результаты в frontend/.lighthouseci/ (LHR JSON-файлы):
+               - по каждому URL баллы: performance, accessibility, best-practices, seo;
+               - список проваленных/предупреждающих аудитов из вывода lhci и отчётов;
+               - отметь, есть ли регрессия против последней записи в docs/devlog/0013-lighthouse-ci.md.
+            5. Зафиксируй вывод для команды:
+               - допиши датированную запись в docs/devlog/0013-lighthouse-ci.md:
+                 дата ISO, ветка/commit, таблица скоров, топ-10 проблем и для каждой —
+                 одна строка «как исправить» с file:line, где известно;
+               - если есть реальные дефекты или регрессия по сравнению с прошлым прогоном:
+                 создай ветку lighthouse/<YYYY-MM-DD>, закоммить запись и любые безопасные
+                 минимальные фиксы, запуши и открой PR в main, укажи его номер в ответе;
+               - если прогон чистый (базовая линия, правки не нужны): НЕ создавай PR,
+                 изменения только в дереве/артефакте, ответ напиши в чат.
+            6. После прогона погаси стек: docker compose --profile default down -v.
+            7. Ответь кратко: таблица скоров, топ проблем, номер PR (если был),
+               где лежит отчёт (артефакт lighthouse-reports).
+
+            Полезные факты о репозитории (см. AGENTS.md):
+            - команды фронта запускай из frontend/, docker compose — из корня;
+            - Node зафиксирован на LTS 24; не понижай зависимости;
+            - контракт и ошибки менять не нужно, это только аудит качества.
+
+      - name: Publish scores summary
+        if: always()
+        continue-on-error: true
+        run: node frontend/scripts/lhci-summary.mjs
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: frontend/.lighthouseci/
+          retention-days: 30
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose --profile default down -v

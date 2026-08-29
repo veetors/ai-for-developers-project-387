@@ -144,6 +144,21 @@ curl -s https://booking-service-3k4r.onrender.com/api/event-types   # 200 JSON
 - `.github/workflows/ci.yml` — интеграционные проверки на каждый PR к `main` и push в `main`: компиляция TypeSpec-контракта, линт/typecheck/юнит‑тесты/сборка фронтенда, ruff/pytest бэкенда, e2e‑тесты Playwright против реального стека (`docker compose --profile default`).
 - `release-please` (`.github/workflows/release-please.yml`) — после мёржа в `main` создаёт/обновляет release‑PR с `CHANGELOG.md` и предложенной версией (conventional commits); после мёржа release‑PR формирует тег `vX.Y.Z` и GitHub Release.
 
+## Регулярная проверка Lighthouse
+
+`.github/workflows/opencode-scheduled.yml` — повторяющаяся задача по расписанию (и вручную
+через **Actions → Scheduled OpenCode Task (Lighthouse) → Run workflow**): агент opencode
+поднимает продакшен‑стек, прогоняет Lighthouse CI (`frontend/lighthouserc.cjs`, 3 URL × 3),
+анализирует отчёты и фиксирует, какие правки нужны, в `docs/devlog/0013-lighthouse-ci.md`.
+
+Результат:
+- таблица скоров (Performance / Accessibility / Best Practices / SEO) — в job summary прогона;
+- HTML‑отчёты — в артефакте `lighthouse-reports` (`.lighthouseci/`, хранится 30 дней);
+- публичные ссылки на каждый отчёт — в логе шага агента.
+
+Расписание на период валидации — каждый час (`17 * * * *`); после зелёных прогонов меняется
+в шапке workflow на раз в сутки в 04:00 МСК (`0 1 * * *`).
+
 ## Статус
 
 Реализовано: SPA, API‑слой, юнит‑тесты (Vitest), e2e (Playwright), Docker‑конфигурация, CI и автоматические релизы через release-please, деплой на Render (Blueprint). Публичное приложение: [https://booking-service-3k4r.onrender.com](https://booking-service-3k4r.onrender.com). См. [`docs/devlog/0001-frontend-impl.md`](docs/devlog/0001-frontend-impl.md), [`docs/devlog/0006-ci-and-release-please.md`](docs/devlog/0006-ci-and-release-please.md) и [`docs/devlog/0010-render-deploy.md`](docs/devlog/0010-render-deploy.md).
