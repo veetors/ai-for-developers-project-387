@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.5](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.4...booking-service-v0.4.5) (2026-08-29)
+
+
+### Continuous Integration
+
+* remove temporary cron probe workflow ([4a5b90b](https://github.com/veetors/ai-for-developers-project-387/commit/4a5b90b7e911edf9c8226dfe6f9f2f4b28017c09))
+
 ## [0.4.4](https://github.com/veetors/ai-for-developers-project-387/compare/booking-service-v0.4.3...booking-service-v0.4.4) (2026-08-29)
 
 
