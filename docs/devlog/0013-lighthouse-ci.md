@@ -147,3 +147,45 @@ CLS 0, TTFB ~0 мс. Сравнение с прошлым прогоном: `/` 
 
 Вывод: прогон чистый (базовая линия держится: 97–98 Perf / 100 остальные), регрессий нет,
 PR не открывался; остаточные перф-предупреждения — только код-сплиттинг и render-blocking CSS.
+
+## 📊 Прогон 2026-09-05 (регулярный, чистый)
+
+- Дата ISO: `2026-09-05`
+- Ветка/commit: `opencode/schedule-a7469a-20260905054522` / `e53cb59`
+- Стек: тот же `docker compose --profile default` (nginx :3000 → Django → postgres),
+  3 URL × 3 прогона, десктопный Lighthouse, assertions — зелёные (все на `warn`/pass).
+- Демо-контент: создан тип события `Консультация 1:1` (id=1) через owner API.
+
+| Страница | Performance | Accessibility | Best Practices | SEO |
+|---|---|---|---|---|
+| `/` | 98 | 100 | 100 | 100 |
+| `/event-types` | 98 | 100 | 100 | 100 |
+| `/event-types/1` | 95 | 100 | 100 | 100 |
+
+Ключевые метрики (медиана, по LHR JSON): FCP 1.8 с на всех страницах, LCP 2.0–2.4 с,
+TBT 10–140 мс, CLS 0, TTFB ~0 мс. Сравнение с прошлым прогоном (2026-08-29): `/` и
+`/event-types` без изменений (98/98), `/event-types/1` Performance **97 → 95** —
+просадка в рамках ранее наблюдаемой полосы 95–97 (та же полоса зафиксирована в прогоне
+«с фиксами» от 08-29), вызвана ростом TBT 70 → 130–140 мс (рендер календаря/сетки слотов)
+и LCP 2.0 → 2.4 с; новых дефектов категорий нет, все score-аудиты зелёные. Регрессией
+на уровне дефекта не признаю (шум раннера + известная перф-точка), правок не требуется.
+
+Публичные отчёты: `/` — <https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1788587322983-72502.report.html>,
+`/event-types` — <https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1788587323446-16821.report.html>,
+`/event-types/1` — <https://storage.googleapis.com/lighthouse-infrastructure.appspot.com/reports/1788587323864-24262.report.html>.
+
+### Топ-10 проблем и как исправить
+1. **`render-blocking-resources`** — CSS `index-*.css` (23.6 КБ) блокирует рендер на всех страницах, экономия 150 мс. Как исправить: инлайн критического CSS или `preload`/`fetchpriority` для ссылки стилей в `frontend/index.html`.
+2. **`unused-javascript`** — единый бандл `index-*.js` 545 КБ (gzip 169 КБ), экономия 100–123 КБ. Как исправить: код-сплиттинг по маршрутам (`React.lazy`) в `frontend/src/app/providers.tsx:40`, либо `manualChunks` в `frontend/vite.config.ts`.
+3. **TBT 130–140 мс / `max-potential-fid` 160–170 мс на `/event-types/1`** — долгая задача на рендере календаря/сетки (причина просадки Perf 97→95). Как исправить: `React.memo`/лязiness для `frontend/src/components/ui/calendar.tsx` и `frontend/src/features/public-slot-picker/SlotGrid.tsx`.
+4. **LCP 2.4 с на `/event-types/1`** — следствие #2/#3. Как исправить: код-сплиттинг маршрута слотов (см. #2).
+5. **FCP 1.8 с на всех URL** — следствие #1/#2. Как исправить: инлайн критического CSS (см. #1) и уменьшение стартового JS (см. #2).
+6. **`long-tasks`** — 2 long tasks на `/` и `/event-types/1`, 4 на `/event-types` (информативно). Как исправить: отложить non-critical JS (`defer`) и уменьшить бандл (см. #2).
+7. **`network-dependency-tree-insight`** (информационный диагн. аудит) — пересматривать после код-сплиттинга.
+8. **`render-blocking-insight`** (информационный диагн. аудит) — пересматривать после #1.
+9. **`npm audit` при сборке frontend-образа** — 20 vulns (2 low, 9 moderate, 8 high, 1 critical) в devDeps (было 17; +3 moderate). Как исправить: `npm audit fix` в `frontend/` (не влияет на Lighthouse, блокирует только при ужесточении политики).
+10. **Статус-чек LHCI 403 в Actions** — `GITHUB_TOKEN` из workflow не имеет прав на `statuses` (загрузка отчётов в temporary-public-storage работает). Как исправить: токен с `checks: write`/`statuses: write` (низкий приоритет).
+
+Вывод: прогон чистый (базовая линия держится: 95–98 Perf / 100 остальные), новых дефектов
+нет, PR не открывался; остаточные перф-предупреждения — прежние (код-сплиттинг, render-blocking CSS),
+на `/event-types/1` дополнительно TBT/LCP — та же перф-точка календаря.
